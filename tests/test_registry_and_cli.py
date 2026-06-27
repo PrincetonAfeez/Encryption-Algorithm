@@ -1,11 +1,25 @@
 import json
+import subprocess
+import sys
 
 import pytest
 
 from feltcrypto import __version__
 from feltcrypto.cli import main
 from feltcrypto.errors import UnknownLessonError
-from feltcrypto.registry import SAFE_API_RESOLUTIONS, get_lesson, list_lessons, run_lesson
+from feltcrypto.models import DemoResult
+from feltcrypto.registry import (
+    _RESOLUTION_FAILURES,
+    SAFE_API_RESOLUTIONS,
+    get_lesson,
+    list_lessons,
+    run_lesson,
+)
+
+
+@pytest.fixture(scope="module")
+def do_it_right_result() -> DemoResult:
+    return run_lesson("do-it-right")
 
 
 def test_registry_metadata_for_every_lesson() -> None:
@@ -91,9 +105,30 @@ def test_cli_and_registry_are_in_sync() -> None:
 
 
 def test_cli_unknown_lesson_exits_with_code_two() -> None:
-    with pytest.raises(SystemExit) as excinfo:
-        main(["show", "not-a-lesson"])
-    assert excinfo.value.code == 2
+    for arguments in (["show", "not-a-lesson"], ["run", "not-a-lesson"], ["not-a-lesson"]):
+        with pytest.raises(SystemExit) as excinfo:
+            main(arguments)
+        assert excinfo.value.code == 2
+
+
+def test_cli_run_all_prints_summary(capsys: pytest.CaptureFixture[str]) -> None:
+    sample = run_lesson("break-caesar")
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr("feltcrypto.cli.run_all_lessons", lambda: [sample, sample])
+        assert main(["run-all"]) == 0
+    output = capsys.readouterr().out
+    assert "SUMMARY: 2/2 lessons succeeded" in output
+
+
+def test_main_module_entry_point() -> None:
+    completed = subprocess.run(
+        [sys.executable, "-m", "feltcrypto", "--version"],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert completed.returncode == 0
+    assert __version__ in completed.stdout
 
 
 def test_cli_version_flag_prints_version(capsys: pytest.CaptureFixture[str]) -> None:
@@ -104,39 +139,56 @@ def test_cli_version_flag_prints_version(capsys: pytest.CaptureFixture[str]) -> 
 
 
 def test_safe_api_resolutions_cover_every_weak_lesson() -> None:
-    weak_ids = {lesson.lesson_id for lesson in list_lessons() if lesson.is_weak}
+    weak_lessons = [lesson for lesson in list_lessons() if lesson.is_weak]
+    weak_ids = {lesson.lesson_id for lesson in weak_lessons}
     resolution_ids = {item["prior_lesson"] for item in SAFE_API_RESOLUTIONS}
     assert resolution_ids == weak_ids
+    assert set(_RESOLUTION_FAILURES) == weak_ids
+    assert [item["prior_lesson"] for item in SAFE_API_RESOLUTIONS] == [
+        lesson.lesson_id for lesson in weak_lessons
+    ]
 
 
-def test_do_it_right_maps_prior_failures_to_safe_api() -> None:
-    result = run_lesson("do-it-right")
+def test_safe_api_resolutions_match_lesson_links() -> None:
+    lessons_by_id = {lesson.lesson_id: lesson for lesson in list_lessons()}
+    for item in SAFE_API_RESOLUTIONS:
+        lesson = lessons_by_id[item["prior_lesson"]]
+        assert item["safe_api_link"] == lesson.summary.safe_api_link
+        assert item["prevention"] == lesson.summary.safe_api_link
+
+
+def test_do_it_right_demo_and_resolutions(do_it_right_result: DemoResult) -> None:
+    result = do_it_right_result
     resolutions = result.measurements["failure_to_safe_api"]
     assert isinstance(resolutions, list)
     assert len(resolutions) == len([lesson for lesson in list_lessons() if lesson.is_weak])
     assert result.safe_api_reference == "feltcrypto.safe_api.generate_key/encrypt/decrypt"
+    for item in resolutions:
+        assert isinstance(item, dict)
+        assert item["safe_api_link"] == item["prevention"]
 
 
-def test_do_it_right_cli_json_marks_safe_lesson(capsys: pytest.CaptureFixture[str]) -> None:
+def test_do_it_right_cli_output(
+    do_it_right_result: DemoResult,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     assert main(["do-it-right", "--json"]) == 0
     document = json.loads(capsys.readouterr().out)
     assert document["lesson_id"] == "do-it-right"
     assert document["not_for_real_use"] is False
     assert document["educational_only"] is True
 
-
-def test_do_it_right_cli_text_shows_resolutions(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["run", "do-it-right"]) == 0
     output = capsys.readouterr().out
     assert "RESOLUTIONS:" in output
     assert "break-caesar:" in output
+    assert "feltcrypto.safe_api.encrypt/decrypt" in output
     assert "SAFETY:" not in output
 
 
 def test_timing_lesson_uses_hmac_compare_digest_link() -> None:
     lesson = get_lesson("timing-attack-demo")
     assert lesson.summary.safe_api_link == "hmac.compare_digest"
-    assert run_lesson("timing-attack-demo").safe_api_reference == "hmac.compare_digest"
 
 
 def test_weak_namespace_exposes_not_for_real_use_metadata() -> None:
@@ -165,6 +217,10 @@ def test_public_package_exports_documented_api() -> None:
         "decrypt",
         "encode_package",
         "decode_package",
+        "AuthenticationError",
+        "PaddingError",
+        "ParseError",
+        "UnknownLessonError",
         "foundations",
         "safe_api",
     ):

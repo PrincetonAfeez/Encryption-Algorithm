@@ -4,6 +4,30 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims to
 adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3] - 2026-06-19
+
+### Fixed
+- `SAFE_API_RESOLUTIONS` is built from weak lessons in registry order (fixes
+  `break-repeating-xor` / `two-time-pad` ordering).
+- Resolution `prevention` and `safe_api_link` now match each lesson's
+  `feltcrypto show` link.
+
+### Changed
+- Added diagnostics to `detect-ecb`, `cbc-bit-flip`, and `padding-oracle-demo`.
+- Re-exported `AuthenticationError`, `ParseError`, `PaddingError`, and
+  `UnknownLessonError` from top-level `feltcrypto`.
+- Reduced redundant `do-it-right` / timing demo runs in tests via a shared fixture.
+- `decode_package()` validates nonce length at parse time; CLI `run-all` prints a
+  summary line and `--help` documents direct lesson aliases.
+
+### Added
+- Edge-case tests for safe API key length, package fields, block-mode validation,
+  foundations helpers, and resolution-label registry sync.
+
+### Documentation
+- README: `python -m feltcrypto`, two-time-pad transcript, package serialization
+  example, live CI badge URL template, softened diagnostics contract wording.
+
 ## [0.1.2] - 2026-06-19
 
 ### Fixed
@@ -26,7 +50,7 @@ adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   `feltcrypto.safe_api.generate_key`) propagate into CLI and JSON output.
 - `do-it-right` maps all prior weak lessons to safe API resolutions, printed
   in text mode as `RESOLUTIONS`.
-- CLI text output now includes `DIAGNOSTICS` for every lesson.
+- CLI text output now includes `DIAGNOSTICS` when a lesson provides them.
 - Demo keys and messages for block modes, MAC, and safe API moved into
   `fixtures.py`.
 - Top-level `feltcrypto` package re-exports documented public API symbols.

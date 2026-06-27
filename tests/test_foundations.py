@@ -6,15 +6,18 @@ from feltcrypto.foundations import (
     base64_encode,
     byte_histogram,
     chunks,
+    english_score,
     fixed_xor,
     hamming_distance,
     hex_decode,
     hex_encode,
+    index_of_coincidence,
     parse_bytes,
     pkcs7_pad,
     pkcs7_unpad,
     transpose_blocks,
 )
+from feltcrypto.randomness import secure_bytes
 
 
 def test_encoding_round_trips_and_explicit_parsing() -> None:
@@ -65,3 +68,22 @@ def test_pkcs7_round_trip_and_strict_failures() -> None:
     for value in malformed:
         with pytest.raises(PaddingError):
             pkcs7_unpad(value, 16)
+
+
+def test_chunks_require_full_and_positive_size() -> None:
+    with pytest.raises(ValueError, match="positive"):
+        chunks(b"abc", 0)
+    with pytest.raises(ValueError, match="exact multiple"):
+        chunks(b"abcdefg", 3, require_full=True)
+
+
+def test_english_score_and_index_of_coincidence_edge_cases() -> None:
+    assert english_score(b"") == float("-inf")
+    assert index_of_coincidence("a") == 0.0
+    assert index_of_coincidence("ab") == 0.0
+    assert index_of_coincidence("aaa") > 0.0
+
+
+def test_secure_bytes_rejects_non_positive_length() -> None:
+    with pytest.raises(ValueError, match="positive"):
+        secure_bytes(0)

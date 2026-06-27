@@ -1,3 +1,4 @@
+import base64
 import json
 
 import pytest
@@ -66,6 +67,31 @@ def test_decrypt_rejects_wrong_key_length() -> None:
     package = encrypt(key, b"secret bytes")
     with pytest.raises(ValueError, match="32 bytes"):
         decrypt(b"too-short", package)
+
+
+def test_encrypt_rejects_wrong_key_length() -> None:
+    with pytest.raises(ValueError, match="32 bytes"):
+        encrypt(b"too-short", b"secret bytes")
+
+
+def test_empty_plaintext_round_trip() -> None:
+    key = generate_key()
+    package = encrypt(key, b"")
+    assert decrypt(key, package) == b""
+
+
+def test_decode_package_rejects_missing_fields_and_wrong_nonce_length() -> None:
+    document = json.loads(encode_package(encrypt(generate_key(), b"x")))
+
+    for field in ("nonce", "ciphertext", "associated_data"):
+        incomplete = dict(document)
+        del incomplete[field]
+        with pytest.raises(ParseError, match=field):
+            decode_package(json.dumps(incomplete))
+
+    document["nonce"] = base64.b64encode(b"short").decode("ascii")
+    with pytest.raises(ParseError, match="nonce"):
+        decode_package(json.dumps(document))
 
 
 def test_generate_key_uses_secure_policy(monkeypatch: pytest.MonkeyPatch) -> None:

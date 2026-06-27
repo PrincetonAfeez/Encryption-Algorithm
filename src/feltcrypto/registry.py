@@ -26,79 +26,37 @@ FRESH_NONCE_ENCRYPT = "feltcrypto.safe_api.encrypt (fresh nonce each call)"
 AEAD_OR_HMAC = "feltcrypto.safe_api.encrypt/decrypt or HMAC-SHA256"
 HMAC_COMPARE_DIGEST = "hmac.compare_digest"
 
-# Prior weak lessons mapped to the safe API (or adjacent stdlib fix) that prevents each.
-SAFE_API_RESOLUTIONS: tuple[dict[str, str], ...] = (
-    {
-        "prior_lesson": "break-caesar",
-        "failure": "Classical shift cipher",
-        "prevention": "encrypt/decrypt AEAD instead of hand-built ciphers",
-    },
-    {
-        "prior_lesson": "break-substitution",
-        "failure": "Simple substitution",
-        "prevention": "encrypt/decrypt AEAD instead of alphabet permutations",
-    },
-    {
-        "prior_lesson": "break-vigenere",
-        "failure": "Repeating classical key",
-        "prevention": "encrypt/decrypt AEAD with managed keys and fresh nonces",
-    },
-    {
-        "prior_lesson": "break-single-byte-xor",
-        "failure": "Tiny single-byte keyspace",
-        "prevention": "generate_key() plus AEAD via encrypt/decrypt",
-    },
-    {
-        "prior_lesson": "two-time-pad",
-        "failure": "One-time pad reuse",
-        "prevention": "generate_key() and a fresh nonce on every encrypt()",
-    },
-    {
-        "prior_lesson": "break-repeating-xor",
-        "failure": "Repeating keystream",
-        "prevention": "AEAD via encrypt(); never build a repeating stream cipher",
-    },
-    {
-        "prior_lesson": "detect-ecb",
-        "failure": "ECB block patterns",
-        "prevention": "AES-GCM authenticated encryption instead of raw ECB",
-    },
-    {
-        "prior_lesson": "cbc-bit-flip",
-        "failure": "Unauthenticated malleability",
-        "prevention": "decrypt() verifies the tag before returning plaintext",
-    },
-    {
-        "prior_lesson": "padding-oracle-demo",
-        "failure": "Padding oracle leakage",
-        "prevention": "AEAD authentication; no distinguishable padding errors",
-    },
-    {
-        "prior_lesson": "nonce-reuse",
-        "failure": "CTR nonce reuse",
-        "prevention": "encrypt() generates a fresh nonce internally",
-    },
-    {
-        "prior_lesson": "length-extension-demo",
-        "failure": "Naive hash(key || message) MAC",
-        "prevention": "GCM authentication tag; use HMAC when a standalone MAC is needed",
-    },
-    {
-        "prior_lesson": "timing-attack-demo",
-        "failure": "Early-return secret comparison",
-        "prevention": "hmac.compare_digest for tag checks; decrypt() verifies before release",
-    },
-    {
-        "prior_lesson": "predict-time-seed",
-        "failure": "Predictable key seed",
-        "prevention": "generate_key() uses secrets.token_bytes",
-    },
-    {
-        "prior_lesson": "predict-mt19937",
-        "failure": "Simulation PRNG for keys",
-        "prevention": "generate_key() and encrypt() use a CSPRNG only",
-    },
-)
+_RESOLUTION_FAILURES: dict[str, str] = {
+    "break-caesar": "Classical shift cipher",
+    "break-substitution": "Simple substitution",
+    "break-vigenere": "Repeating classical key",
+    "break-single-byte-xor": "Tiny single-byte keyspace",
+    "break-repeating-xor": "Repeating keystream",
+    "two-time-pad": "One-time pad reuse",
+    "detect-ecb": "ECB block patterns",
+    "cbc-bit-flip": "Unauthenticated malleability",
+    "padding-oracle-demo": "Padding oracle leakage",
+    "nonce-reuse": "CTR nonce reuse",
+    "length-extension-demo": "Naive hash(key || message) MAC",
+    "timing-attack-demo": "Early-return secret comparison",
+    "predict-time-seed": "Predictable key seed",
+    "predict-mt19937": "Simulation PRNG for keys",
+}
+
+
+def _safe_api_resolutions_for(lessons: tuple[Lesson, ...]) -> tuple[dict[str, str], ...]:
+    """Build the do-it-right map from weak lessons in registry order."""
+
+    return tuple(
+        {
+            "prior_lesson": lesson.lesson_id,
+            "failure": _RESOLUTION_FAILURES[lesson.lesson_id],
+            "prevention": lesson.summary.safe_api_link,
+            "safe_api_link": lesson.summary.safe_api_link,
+        }
+        for lesson in lessons
+        if lesson.is_weak
+    )
 
 
 def _summary(
@@ -307,6 +265,10 @@ def _run_ecb() -> DemoResult:
             "ecb_repeated": ecb_repeats,
             "cbc_repeated": cbc_repeats,
         },
+        diagnostics={
+            "ecb_repeated_blocks_detected": ecb_repeats,
+            "cbc_repeated_blocks_detected": cbc_repeats,
+        },
     )
 
 
@@ -330,6 +292,10 @@ def _run_cbc_bit_flip() -> DemoResult:
         "A ciphertext delta causes a predictable delta in the following plaintext block.",
         "Encryption without authentication is malleable; use AEAD so tampering fails closed.",
         recovered_plaintext=altered_plaintext.decode("ascii", errors="replace"),
+        diagnostics={
+            "flip_offset": offset,
+            "target_field": "admin=0 -> admin=1",
+        },
     )
 
 
@@ -352,6 +318,7 @@ def _run_padding_oracle() -> DemoResult:
         "Unauthenticated CBC plus distinguishable errors forms a decryption oracle; use AEAD.",
         recovered_plaintext=recovered.decode("ascii"),
         measurements={"oracle_queries": query_count},
+        diagnostics={"oracle_queries": query_count},
     )
 
 
@@ -771,6 +738,8 @@ _LESSONS = (
         is_weak=False,
     ),
 )
+
+SAFE_API_RESOLUTIONS = _safe_api_resolutions_for(_LESSONS)
 
 LESSONS: dict[str, Lesson] = {lesson.lesson_id: lesson for lesson in _LESSONS}
 

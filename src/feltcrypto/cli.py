@@ -33,8 +33,8 @@ def _print_resolutions(measurements: dict[str, JSONValue]) -> None:
             continue
         prior = item.get("prior_lesson", "?")
         failure = item.get("failure", "?")
-        prevention = item.get("prevention", "?")
-        print(f"  - {prior}: {failure} -> {prevention}")
+        link = item.get("safe_api_link", item.get("prevention", "?"))
+        print(f"  - {prior}: {failure} -> {link}")
 
 
 def _print_result(result: DemoResult) -> None:
@@ -68,6 +68,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="feltcrypto",
         description="Academic crypto failure demos against bundled local fixtures only.",
+        epilog=(
+            "Any lesson id can be invoked directly, for example "
+            "'feltcrypto break-caesar' is the same as 'feltcrypto run break-caesar'."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -138,6 +143,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         else:
             for result in results:
                 _print_result(result)
+            succeeded = sum(1 for result in results if result.success)
+            print(f"SUMMARY: {succeeded}/{len(results)} lessons succeeded")
         return 0 if all(result.success for result in results) else 1
     except (FeltCryptoError, ValueError) as exc:
         parser.exit(2, f"error: {exc}\n")

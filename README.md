@@ -2,9 +2,8 @@
 
 [![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
 
-> After publishing to GitHub, replace the CI badge URL with your repository's
-> Actions badge, for example:
-> `https://github.com/OWNER/REPO/actions/workflows/ci.yml/badge.svg`
+> After publishing to GitHub, replace the static CI badge with your live Actions badge:
+> `https://github.com/PrincetonAfeez/feltcrypto/actions/workflows/ci.yml/badge.svg`
 
 > **Repository URLs:** `pyproject.toml` lists placeholder GitHub links
 > (`PrincetonAfeez/feltcrypto`) for portfolio metadata. Update them after you
@@ -34,17 +33,21 @@ Python 3.11 or newer is required.
 
 ```console
 python -m pip install -e ".[dev]"
-feltcrypto --version
-feltcrypto list
-feltcrypto show padding-oracle-demo
-feltcrypto padding-oracle-demo
-feltcrypto do-it-right --json
+python -m feltcrypto --version
+python -m feltcrypto list
+python -m feltcrypto show padding-oracle-demo
+python -m feltcrypto padding-oracle-demo
+python -m feltcrypto do-it-right --json
 pytest
 ```
 
-The direct lesson commands are aliases for `feltcrypto run LESSON_ID`. Use
-`feltcrypto run-all` to execute the full learning arc. Every **weak** lesson
-command prints a safety notice. JSON results for weak lessons contain:
+On Windows the `feltcrypto` script may not be on PATH; use `python -m feltcrypto`
+for every command above.
+
+The direct lesson commands are aliases for `feltcrypto run LESSON_ID` (see
+`feltcrypto --help`). Use `feltcrypto run-all` to execute the full learning arc;
+text output ends with a success summary. Every **weak** lesson command prints a
+safety notice. JSON results for weak lessons contain:
 
 ```json
 {
@@ -153,6 +156,21 @@ SAFE API: feltcrypto.safe_api.encrypt/decrypt
 ```
 
 ```console
+> feltcrypto two-time-pad
+========================================================================
+LESSON: two-time-pad
+SAFETY: Educational only: ...
+FIXTURE: two-time-pad-local (local=true)
+SUCCESS: true
+OBSERVATION: A unique pad round-trips with no cross-message leak; reusing that pad cancels the key.
+DIAGNOSTICS: {"secure_baseline_plaintext": "meet me at the library at seven tonight.", ...}
+MEASUREMENTS: {"crib_candidates": 5, "otp_unique_pad_roundtrip": true}
+RECOVERED PLAINTEXT: send me the revised chapter at nine tonight.
+TAKEAWAY: A one-time pad is secure only when random, message-length, secret, and never reused.
+SAFE API: feltcrypto.safe_api.generate_key/encrypt/decrypt
+```
+
+```console
 > feltcrypto padding-oracle-demo
 ========================================================================
 LESSON: padding-oracle-demo
@@ -161,6 +179,7 @@ FIXTURE: padding-oracle-local (local=true)
 SUCCESS: true
 OBSERVATION: Only a valid/invalid padding bit was exposed, yet every plaintext byte was recovered.
 RECOVERED PLAINTEXT: Padding oracles turn one leaked bit into recovered local plaintext.
+DIAGNOSTICS: {"oracle_queries": 20485}
 MEASUREMENTS: {"oracle_queries": 20485}
 TAKEAWAY: Unauthenticated CBC plus distinguishable errors forms a decryption oracle; use AEAD.
 SAFE API: feltcrypto.safe_api.encrypt/decrypt
@@ -189,9 +208,9 @@ SUCCESS: true
 OBSERVATION: AES-GCM encrypts and authenticates; altered packages return no plaintext.
 MEASUREMENTS: {"tampering_rejected": true}
 RESOLUTIONS:
-  - break-caesar: Classical shift cipher -> encrypt/decrypt AEAD instead of hand-built ciphers
-  - break-substitution: Simple substitution -> encrypt/decrypt AEAD instead of alphabet permutations
-  - ... (12 more prior weak lessons) ...
+  - break-caesar: Classical shift cipher -> feltcrypto.safe_api.encrypt/decrypt
+  - break-substitution: Simple substitution -> feltcrypto.safe_api.encrypt/decrypt
+  - ... (12 more prior weak lessons in registry order) ...
 TAKEAWAY: Use a vetted AEAD through a small API that owns nonce generation and verification.
 SAFE API: feltcrypto.safe_api.generate_key/encrypt/decrypt
 ```
@@ -217,19 +236,30 @@ change. Authentication failure returns no plaintext.
 
 ```python
 import feltcrypto
-from feltcrypto import decrypt, encrypt, generate_key, parse_bytes
+from feltcrypto import (
+    AuthenticationError,
+    decode_package,
+    decrypt,
+    encode_package,
+    encrypt,
+    generate_key,
+    parse_bytes,
+)
 
 key = generate_key()
 package = encrypt(key, b"local secret", associated_data=b"record=7")
 assert decrypt(key, package) == b"local secret"
+assert decrypt(key, decode_package(encode_package(package))) == b"local secret"
 assert parse_bytes("6869", "hex") == b"hi"
 ```
 
-Alternatively, import from submodules directly:
+`AuthenticationError`, `ParseError`, `PaddingError`, and `UnknownLessonError` are
+re-exported from the top-level `feltcrypto` package. Alternatively, import from submodules:
 
 ```python
+from feltcrypto.errors import AuthenticationError, ParseError
 from feltcrypto.foundations import parse_bytes
-from feltcrypto.safe_api import decrypt, encrypt, generate_key
+from feltcrypto.safe_api import decode_package, decrypt, encode_package, encrypt, generate_key
 ```
 
 Production applications still need a real key-management design. This capstone
@@ -242,7 +272,8 @@ Every registry entry supplies:
 1. the deliberately weak assumption;
 2. a bundled deterministic fixture;
 3. the observation or leak used by the attack;
-4. a structured result with diagnostics and measurements;
+4. a structured result with diagnostics and/or measurements when they add
+   teaching value;
 5. **FAILURE** — what broke;
 6. **CAUSE** — which invariant failed;
 7. **CORRECT CONSTRUCTION** — what belongs in a real design;
@@ -269,7 +300,7 @@ Run `feltcrypto show LESSON_ID` to read that four-part summary.
 
 ```text
 src/feltcrypto/
-  __init__.py          public exports: registry, safe_api, foundations.parse_bytes
+  __init__.py          public exports: registry, safe_api, errors, foundations.parse_bytes
   __main__.py          python -m feltcrypto entry point
   cli.py               command-line interface and lesson dispatch
   errors.py            ParseError, PaddingError, AuthenticationError, ...

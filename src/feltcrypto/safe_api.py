@@ -97,8 +97,11 @@ def decode_package(encoded: str) -> EncryptedPackage:
         raise ParseError(f"unsupported encrypted package version: {document.get('version')!r}")
     if document.get("algorithm") != "AES-256-GCM":
         raise ParseError("encrypted package algorithm must be AES-256-GCM")
+    nonce = _decode_field(document, "nonce")
+    if len(nonce) != NONCE_SIZE:
+        raise ParseError(f"package field 'nonce' must decode to exactly {NONCE_SIZE} bytes")
     return EncryptedPackage(
-        nonce=_decode_field(document, "nonce"),
+        nonce=nonce,
         ciphertext=_decode_field(document, "ciphertext"),
         associated_data=_decode_field(document, "associated_data"),
     )
