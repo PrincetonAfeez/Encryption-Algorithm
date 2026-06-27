@@ -1,0 +1,14 @@
+# Normalize line endings: store text as LF in the repo, check out native.
+* text=auto eol=lf
+
+# Explicit text types (defensive; covered by text=auto above).
+*.py    text eol=lf
+*.toml  text eol=lf
+*.md    text eol=lf
+*.cfg   text eol=lf
+*.yml   text eol=lf
+*.yaml  text eol=lf
+
+# Treat build artifacts and wheels as binary.
+*.whl   binary
+*.tar.gz binary

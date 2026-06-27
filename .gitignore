@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.hypothesis/
+.venv/
+build/
+dist/
+*.egg-info/
+
+# Academic scope documents (local planning only)
+encryption_academic_scope.txt
+encryption_academic_revised_scope.txt

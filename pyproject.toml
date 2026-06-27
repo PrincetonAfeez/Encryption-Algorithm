@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "feltcrypto"
+version = "0.1.0"
+description = "A local, academic cryptography failure-mode teaching library"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Princeton Afeez" }]
+dependencies = ["cryptography>=43"]
+
+[project.optional-dependencies]
+dev = ["hypothesis>=6", "mypy>=1.13", "pytest>=8.3", "pytest-cov>=5", "ruff>=0.8"]
+
+[project.scripts]
+feltcrypto = "feltcrypto.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+feltcrypto = ["py.typed"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["B", "C4", "E", "F", "I", "PIE", "PT", "RUF", "SIM", "UP"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+mypy_path = "src"
+explicit_package_bases = true
+packages = ["feltcrypto"]
+
+[tool.coverage.run]
+source = ["feltcrypto"]
+omit = ["*/__main__.py"]
+
+[tool.coverage.report]
+exclude_also = ["if __name__ == .__main__.:"]
