@@ -4,6 +4,40 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims to
 adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.2] - 2026-06-19
+
+### Fixed
+- `do-it-right` resolution map now includes all **14** weak lessons (added
+  `break-single-byte-xor`).
+- Package version fallback matches `pyproject.toml` when metadata is unavailable.
+
+### Changed
+- `_summary()` default link uses the shared `AEAD_SAFE_API` constant.
+- Registry test asserts every weak lesson appears in `SAFE_API_RESOLUTIONS`.
+
+### Documentation
+- README lesson map adds a SAFE API LINK column aligned with `feltcrypto show`.
+- Added `do-it-right` and `timing-attack-demo` transcripts; placeholder repo URL note.
+
+## [0.1.1] - 2026-06-19
+
+### Changed
+- Per-lesson `safe_api_link` values (for example `hmac.compare_digest` and
+  `feltcrypto.safe_api.generate_key`) propagate into CLI and JSON output.
+- `do-it-right` maps all prior weak lessons to safe API resolutions, printed
+  in text mode as `RESOLUTIONS`.
+- CLI text output now includes `DIAGNOSTICS` for every lesson.
+- Demo keys and messages for block modes, MAC, and safe API moved into
+  `fixtures.py`.
+- Top-level `feltcrypto` package re-exports documented public API symbols.
+- `__version__` reads from installed package metadata (`pyproject.toml`).
+- `make check` matches CI coverage gate; tests no longer run the full lesson
+  arc twice.
+
+### Documentation
+- README portfolio framing, JSON safety exception for `do-it-right`, Caesar
+  transcript, project structure, and dev workflow updates.
+
 ## [0.1.0] - 2026-06-19
 
 Initial academic release: a teaching library that builds deliberately weak

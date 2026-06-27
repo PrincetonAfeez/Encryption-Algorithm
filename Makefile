@@ -23,4 +23,4 @@ check:
 	ruff check .
 	ruff format --check .
 	mypy
-	pytest
+	pytest --cov=feltcrypto --cov-fail-under=90

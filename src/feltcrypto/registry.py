@@ -20,9 +20,34 @@ SAFETY_NOTICE = (
 )
 
 DO_IT_RIGHT_SAFE_API = "feltcrypto.safe_api.generate_key/encrypt/decrypt"
+AEAD_SAFE_API = "feltcrypto.safe_api.encrypt/decrypt"
+GENERATE_KEY_API = "feltcrypto.safe_api.generate_key"
+FRESH_NONCE_ENCRYPT = "feltcrypto.safe_api.encrypt (fresh nonce each call)"
+AEAD_OR_HMAC = "feltcrypto.safe_api.encrypt/decrypt or HMAC-SHA256"
+HMAC_COMPARE_DIGEST = "hmac.compare_digest"
 
-# Prior failure lessons (sections 4-7) mapped to the single safe API that prevents each.
+# Prior weak lessons mapped to the safe API (or adjacent stdlib fix) that prevents each.
 SAFE_API_RESOLUTIONS: tuple[dict[str, str], ...] = (
+    {
+        "prior_lesson": "break-caesar",
+        "failure": "Classical shift cipher",
+        "prevention": "encrypt/decrypt AEAD instead of hand-built ciphers",
+    },
+    {
+        "prior_lesson": "break-substitution",
+        "failure": "Simple substitution",
+        "prevention": "encrypt/decrypt AEAD instead of alphabet permutations",
+    },
+    {
+        "prior_lesson": "break-vigenere",
+        "failure": "Repeating classical key",
+        "prevention": "encrypt/decrypt AEAD with managed keys and fresh nonces",
+    },
+    {
+        "prior_lesson": "break-single-byte-xor",
+        "failure": "Tiny single-byte keyspace",
+        "prevention": "generate_key() plus AEAD via encrypt/decrypt",
+    },
     {
         "prior_lesson": "two-time-pad",
         "failure": "One-time pad reuse",
@@ -61,7 +86,7 @@ SAFE_API_RESOLUTIONS: tuple[dict[str, str], ...] = (
     {
         "prior_lesson": "timing-attack-demo",
         "failure": "Early-return secret comparison",
-        "prevention": "Library-side constant-time verification inside decrypt()",
+        "prevention": "hmac.compare_digest for tag checks; decrypt() verifies before release",
     },
     {
         "prior_lesson": "predict-time-seed",
@@ -80,7 +105,7 @@ def _summary(
     failure: str,
     cause: str,
     correct: str,
-    link: str = "feltcrypto.safe_api.encrypt/decrypt",
+    link: str = AEAD_SAFE_API,
 ) -> LessonSummary:
     return LessonSummary(failure, cause, correct, link)
 
@@ -231,7 +256,7 @@ def _run_two_time_pad() -> DemoResult:
     secure_roundtrip = xor.otp_encrypt(secure_cipher, fixtures.OTP_SECURE_PAD)
 
     length = max(len(fixtures.OTP_MESSAGE_ONE), len(fixtures.OTP_MESSAGE_TWO))
-    pad = bytes((index * 73 + 41) % 256 for index in range(length))
+    pad = fixtures.OTP_REUSE_PAD
     first = fixtures.OTP_MESSAGE_ONE.ljust(length)
     second = fixtures.OTP_MESSAGE_TWO.ljust(length)
     ciphertext_one = xor.otp_encrypt(first, pad)
@@ -265,10 +290,10 @@ def _run_two_time_pad() -> DemoResult:
 
 
 def _run_ecb() -> DemoResult:
-    key = b"E" * 16
-    iv = b"I" * 16
-    ecb = block_modes.aes_ecb_encrypt(fixtures.ECB_PATTERN, key, pad=False)
-    cbc = block_modes.aes_cbc_encrypt(fixtures.ECB_PATTERN, key, iv)
+    ecb = block_modes.aes_ecb_encrypt(fixtures.ECB_PATTERN, fixtures.AES_ECB_KEY, pad=False)
+    cbc = block_modes.aes_cbc_encrypt(
+        fixtures.ECB_PATTERN, fixtures.AES_ECB_KEY, fixtures.AES_ECB_IV
+    )
     ecb_repeats = block_modes.detect_ecb(ecb)
     cbc_repeats = block_modes.detect_ecb(cbc)
     return _result(
@@ -286,13 +311,17 @@ def _run_ecb() -> DemoResult:
 
 
 def _run_cbc_bit_flip() -> DemoResult:
-    key = b"C" * 16
-    iv = b"V" * 16
     plaintext = fixtures.CBC_ADMIN_PLAINTEXT
-    ciphertext = block_modes.aes_cbc_encrypt(plaintext, key, iv)
+    ciphertext = block_modes.aes_cbc_encrypt(
+        plaintext, fixtures.AES_CBC_ADMIN_KEY, fixtures.AES_CBC_ADMIN_IV
+    )
     offset = plaintext.index(b"admin=0")
-    modified, modified_iv = block_modes.cbc_bit_flip(ciphertext, iv, offset, b"admin=0", b"admin=1")
-    altered_plaintext = block_modes.aes_cbc_decrypt(modified, key, modified_iv)
+    modified, modified_iv = block_modes.cbc_bit_flip(
+        ciphertext, fixtures.AES_CBC_ADMIN_IV, offset, b"admin=0", b"admin=1"
+    )
+    altered_plaintext = block_modes.aes_cbc_decrypt(
+        modified, fixtures.AES_CBC_ADMIN_KEY, modified_iv
+    )
     return _result(
         "cbc-bit-flip",
         ("aes", "cbc", "malleability", "integrity"),
@@ -305,11 +334,15 @@ def _run_cbc_bit_flip() -> DemoResult:
 
 
 def _run_padding_oracle() -> DemoResult:
-    key = b"P" * 16
-    iv = b"O" * 16
-    oracle = block_modes.LocalPaddingOracle(key)
-    ciphertext = block_modes.aes_cbc_encrypt(fixtures.CBC_ORACLE_PLAINTEXT, key, iv)
-    recovered, query_count = block_modes.padding_oracle_attack(iv, ciphertext, oracle.valid_padding)
+    oracle = block_modes.LocalPaddingOracle(fixtures.AES_PADDING_ORACLE_KEY)
+    ciphertext = block_modes.aes_cbc_encrypt(
+        fixtures.CBC_ORACLE_PLAINTEXT,
+        fixtures.AES_PADDING_ORACLE_KEY,
+        fixtures.AES_PADDING_ORACLE_IV,
+    )
+    recovered, query_count = block_modes.padding_oracle_attack(
+        fixtures.AES_PADDING_ORACLE_IV, ciphertext, oracle.valid_padding
+    )
     return _result(
         "padding-oracle-demo",
         ("aes", "cbc", "padding", "side-channel"),
@@ -323,10 +356,12 @@ def _run_padding_oracle() -> DemoResult:
 
 
 def _run_nonce_reuse() -> DemoResult:
-    key = b"N" * 16
-    nonce = b"0" * 16
-    first = block_modes.aes_ctr_crypt(fixtures.CTR_MESSAGE_ONE, key, nonce)
-    second = block_modes.aes_ctr_crypt(fixtures.CTR_MESSAGE_TWO, key, nonce)
+    first = block_modes.aes_ctr_crypt(
+        fixtures.CTR_MESSAGE_ONE, fixtures.AES_CTR_KEY, fixtures.AES_CTR_NONCE
+    )
+    second = block_modes.aes_ctr_crypt(
+        fixtures.CTR_MESSAGE_TWO, fixtures.AES_CTR_KEY, fixtures.AES_CTR_NONCE
+    )
     known_length = min(len(first), len(second))
     keystream = fixed_xor(first[:known_length], fixtures.CTR_MESSAGE_ONE[:known_length])
     recovered = fixed_xor(second[:known_length], keystream)
@@ -344,9 +379,9 @@ def _run_nonce_reuse() -> DemoResult:
 
 
 def _run_length_extension() -> DemoResult:
-    key = b"local-secret"
-    message = b"action=view&document=lesson"
-    suffix = b"&admin=true"
+    key = fixtures.PREFIX_MAC_KEY
+    message = fixtures.PREFIX_MAC_MESSAGE
+    suffix = fixtures.PREFIX_MAC_SUFFIX
     # Naive MAC = SHA1(key || message): the published digest is resumable hash
     # state, so length extension forges a valid tag for an appended suffix
     # without ever knowing the key.
@@ -402,9 +437,9 @@ def _run_timing() -> DemoResult:
 
 
 def _run_time_seed() -> DemoResult:
-    seed = 1_700_000_123
-    window = 60
-    observed_offset = 30
+    seed = fixtures.TIME_SEED_VALUE
+    window = fixtures.TIME_SEED_WINDOW
+    observed_offset = fixtures.TIME_SEED_OFFSET
     token = randomness_failures.generate_time_seeded_token(seed)
     recovered = randomness_failures.recover_time_seed(token, seed + observed_offset, window=window)
     return _result(
@@ -422,7 +457,7 @@ def _run_time_seed() -> DemoResult:
 def _run_mt19937() -> DemoResult:
     observed_count = 624  # MT19937 exposes its whole state after one full period
     predict_count = 10
-    source = random.Random(8675309)
+    source = random.Random(fixtures.MT19937_SEED)
     observed = [source.getrandbits(32) for _ in range(observed_count)]
     clone = randomness_failures.clone_mt19937(observed)
     expected = [source.getrandbits(32) for _ in range(predict_count)]
@@ -442,8 +477,8 @@ def _run_mt19937() -> DemoResult:
 
 def _run_safe_api() -> DemoResult:
     key = safe_api.generate_key()
-    plaintext = b"authenticated encryption is intentionally boring"
-    associated_data = b"lesson=do-it-right"
+    plaintext = fixtures.SAFE_API_PLAINTEXT
+    associated_data = fixtures.SAFE_API_ASSOCIATED_DATA
     package = safe_api.encrypt(key, plaintext, associated_data)
     recovered = safe_api.decrypt(key, safe_api.decode_package(safe_api.encode_package(package)))
 
@@ -567,6 +602,7 @@ _LESSONS = (
             "All 256 keys were scored and the plaintext recovered.",
             "The key space is tiny and the same transformation repeats.",
             "Use AEAD with a securely generated key.",
+            DO_IT_RIGHT_SAFE_API,
         ),
         _run_single_byte_xor,
         "Exhaustive search is practical when the entire key space has only 256 values.",
@@ -595,6 +631,7 @@ _LESSONS = (
             "Pad reuse canceled the key and exposed the second message.",
             "The one-time requirement was violated.",
             "Use AEAD with unique nonces and managed keys.",
+            DO_IT_RIGHT_SAFE_API,
         ),
         _run_two_time_pad,
         "First show a unique pad round-tripping cleanly, "
@@ -652,6 +689,7 @@ _LESSONS = (
             "Repeated keystream decrypted the overlapping message.",
             "CTR key/nonce reuse repeats the stream.",
             "Use an API that generates fresh nonces internally.",
+            FRESH_NONCE_ENCRYPT,
         ),
         _run_nonce_reuse,
         "With a repeated CTR nonce, known plaintext reveals the shared keystream.",
@@ -666,6 +704,7 @@ _LESSONS = (
             "A valid tag was forged without the key.",
             "Merkle-Damgard state can continue from a published digest.",
             "Use HMAC or AEAD.",
+            AEAD_OR_HMAC,
         ),
         _run_length_extension,
         "The digest acts as resumable hash state; HMAC's nested construction prevents this.",
@@ -680,6 +719,7 @@ _LESSONS = (
             "Runtime distinguished an early mismatch from a full match.",
             "The comparator returned early and work depended on secret agreement.",
             "Use hmac.compare_digest and avoid secret-dependent control flow.",
+            HMAC_COMPARE_DIGEST,
         ),
         _run_timing,
         "Repeated trials reveal a noisy but clear runtime difference.",
@@ -694,6 +734,7 @@ _LESSONS = (
             "The seed was recovered from a small time window.",
             "Timestamp entropy and uncertainty were tiny.",
             "Generate keys with secrets or the vetted library.",
+            GENERATE_KEY_API,
         ),
         _run_time_seed,
         "Search the plausible local timestamp window and regenerate each output.",
@@ -708,6 +749,7 @@ _LESSONS = (
             "Future outputs were predicted exactly.",
             "MT19937 output reveals its recoverable internal state.",
             "Use secrets or os.urandom for cryptographic randomness.",
+            GENERATE_KEY_API,
         ),
         _run_mt19937,
         "Invert the tempering transform for 624 outputs, then load the recovered state.",

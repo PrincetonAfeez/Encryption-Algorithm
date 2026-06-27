@@ -23,6 +23,20 @@ def _print_json(value: JSONValue) -> None:
     print(json.dumps(value, indent=2, sort_keys=True))
 
 
+def _print_resolutions(measurements: dict[str, JSONValue]) -> None:
+    resolutions = measurements.get("failure_to_safe_api")
+    if not isinstance(resolutions, list):
+        return
+    print("RESOLUTIONS:")
+    for item in resolutions:
+        if not isinstance(item, dict):
+            continue
+        prior = item.get("prior_lesson", "?")
+        failure = item.get("failure", "?")
+        prevention = item.get("prevention", "?")
+        print(f"  - {prior}: {failure} -> {prevention}")
+
+
 def _print_result(result: DemoResult) -> None:
     print("=" * 72)
     print(f"LESSON: {result.lesson_id}")
@@ -35,8 +49,17 @@ def _print_result(result: DemoResult) -> None:
         print(f"RECOVERED KEY: {result.recovered_key}")
     if result.recovered_plaintext is not None:
         print(f"RECOVERED PLAINTEXT: {result.recovered_plaintext}")
+    if result.diagnostics:
+        print(f"DIAGNOSTICS: {json.dumps(result.diagnostics, sort_keys=True)}")
     if result.measurements:
-        print(f"MEASUREMENTS: {json.dumps(result.measurements, sort_keys=True)}")
+        resolutions = result.measurements.get("failure_to_safe_api")
+        other_measurements = {
+            key: value for key, value in result.measurements.items() if key != "failure_to_safe_api"
+        }
+        if other_measurements:
+            print(f"MEASUREMENTS: {json.dumps(other_measurements, sort_keys=True)}")
+        if resolutions is not None:
+            _print_resolutions(result.measurements)
     print(f"TAKEAWAY: {result.takeaway}")
     print(f"SAFE API: {result.safe_api_reference}")
 

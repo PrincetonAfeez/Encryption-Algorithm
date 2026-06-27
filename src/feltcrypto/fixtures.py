@@ -30,16 +30,41 @@ OTP_MESSAGE_ONE = b"meet me at the library at seven tonight."
 OTP_SECURE_PAD = bytes((index * 97 + 13) % 256 for index in range(len(OTP_MESSAGE_ONE)))
 OTP_MESSAGE_TWO = b"send me the revised chapter at nine tonight."
 OTP_CRIB = b" the "
+OTP_REUSE_PAD = bytes(
+    (index * 73 + 41) % 256 for index in range(max(len(OTP_MESSAGE_ONE), len(OTP_MESSAGE_TWO)))
+)
 
 ECB_PATTERN = b"YELLOW SUBMARINE" * 8
+AES_ECB_KEY = b"E" * 16
+AES_ECB_IV = b"I" * 16
 
 CBC_ADMIN_PLAINTEXT = b"comment=toy-demo;admin=0;scope=local-only"
+AES_CBC_ADMIN_KEY = b"C" * 16
+AES_CBC_ADMIN_IV = b"V" * 16
+
 CBC_ORACLE_PLAINTEXT = b"Padding oracles turn one leaked bit into recovered local plaintext."
+AES_PADDING_ORACLE_KEY = b"P" * 16
+AES_PADDING_ORACLE_IV = b"O" * 16
 
 CTR_MESSAGE_ONE = b"nonce reuse makes stream ciphers repeat their keystream"
 CTR_MESSAGE_TWO = b"local demos make dangerous invariants visible and memorable"
+AES_CTR_KEY = b"N" * 16
+AES_CTR_NONCE = b"0" * 16
+
+PREFIX_MAC_KEY = b"local-secret"
+PREFIX_MAC_MESSAGE = b"action=view&document=lesson"
+PREFIX_MAC_SUFFIX = b"&admin=true"
 
 TIMING_SECRET = b"local-demo-tag"
+
+TIME_SEED_VALUE = 1_700_000_123
+TIME_SEED_WINDOW = 60
+TIME_SEED_OFFSET = 30
+
+MT19937_SEED = 8675309
+
+SAFE_API_PLAINTEXT = b"authenticated encryption is intentionally boring"
+SAFE_API_ASSOCIATED_DATA = b"lesson=do-it-right"
 
 SUBSTITUTION_PLAINTEXT = (
     "this teaching library shows that simple substitution preserves repeated letter "
