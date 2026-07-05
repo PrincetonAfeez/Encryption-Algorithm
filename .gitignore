@@ -1,18 +1,29 @@
+# Bytecode and caches
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.hypothesis/
+
+# Test and type artifacts
 .coverage
 .coverage.*
 htmlcov/
 coverage.xml
-.hypothesis/
+
+# Virtual environments and build output
 .venv/
+venv/
 build/
 dist/
 *.egg-info/
 
-# Academic scope documents (local planning only)
+# Editor and OS noise
+.cursor/
+.DS_Store
+Thumbs.db
+
+# Academic scope documents (local planning only — not for the public repo)
 encryption_academic_scope.txt
 encryption_academic_revised_scope.txt
