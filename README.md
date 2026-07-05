@@ -31,8 +31,21 @@ See [CHANGELOG.md](CHANGELOG.md) for release history.
 
 Python 3.11 or newer is required.
 
+**Editable install (recommended for development):**
+
 ```console
 python -m pip install -e ".[dev]"
+```
+
+**Requirements files** (runtime or CI-style install):
+
+```console
+python -m pip install -r requirements.txt          # runtime only
+python -m pip install -r requirements-dev.txt      # dev/CI tools
+python -m pip install -e .                         # add after requirements-dev.txt
+```
+
+```console
 python -m feltcrypto --version
 python -m feltcrypto list
 python -m feltcrypto show padding-oracle-demo
@@ -106,7 +119,8 @@ command that breaks user-supplied ciphertext.
 
 ## Development and quality gates
 
-Install dev dependencies, then run the same checks as CI:
+Install dev dependencies (`pip install -e ".[dev]"` or `requirements-dev.txt`
+plus `pip install -e .`), then run the same checks as CI:
 
 ```console
 python -m pip install -e ".[dev]"
@@ -118,11 +132,36 @@ python -m pip install -e ".[dev]"
 | Lint | `ruff check .` |
 | Format | `ruff format .` |
 | Typecheck | `mypy` |
-| Tests + coverage | `pytest --cov=feltcrypto --cov-report=term-missing --cov-fail-under=90` |
-| Property-based tests | `pytest tests/test_properties.py` (Hypothesis) |
+| Tests + coverage | `pytest --cov=feltcrypto --cov-report=term-missing --cov-fail-under=99` |
+| Property-based tests | `pytest tests/test_properties.py tests/test_properties_extended.py` |
+
+CI runs these gates on Python 3.11–3.13 via GitHub Actions (see
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml)). The suite currently
+includes **160 tests** across **16 modules** with a **99%** line-coverage gate.
+
+### Test layout
+
+| Module | Focus |
+|---|---|
+| `test_foundations.py` | Hex/Base64, XOR, PKCS#7, scoring helpers |
+| `test_safe_api.py` | AES-GCM round trip, tampering, package parsing |
+| `test_classical_and_xor.py` | Lesson-level classical and XOR breaks |
+| `test_classical_exhaustive.py` | Classical cipher edge cases and validation |
+| `test_xor_exhaustive.py` | XOR/OTP/crib-drag edge cases |
+| `test_block_modes.py` | ECB, CBC, padding oracle, CTR reuse |
+| `test_integrity_and_randomness.py` | MAC, timing, RNG failure demos |
+| `test_sha1_educational.py` | Educational SHA-1 and length extension |
+| `test_registry_and_cli.py` | Lesson registry, CLI, resolutions sync |
+| `test_cli_exhaustive.py` | CLI output helpers and exit codes |
+| `test_errors_and_models.py` | Exception hierarchy and typed models |
+| `test_fixtures.py` | Bundled fixture constants |
+| `test_package_init.py` | Public exports and version metadata |
+| `test_api_surface.py` | Import smoke tests for every submodule |
+| `test_properties.py` | Hypothesis round-trip invariants |
+| `test_properties_extended.py` | Hypothesis coverage for foundations helpers |
 
 On Windows without Make, invoke the commands in the table directly in PowerShell
-or your terminal. CI runs these gates on Python 3.11–3.13 via GitHub Actions.
+or your terminal.
 
 ## Representative transcript
 
@@ -319,12 +358,16 @@ src/feltcrypto/
     sha1.py            educational SHA-1 for length-extension demos
     xor.py             XOR and one-time-pad reuse
 tests/
-  test_properties.py   Hypothesis property-based foundation tests
-  ...                  round trips, attacks, failure handling, CLI sync
-CHANGELOG.md            release history
-LICENSE                 MIT
-Makefile                local lint/typecheck/test targets
-.github/workflows/ci.yml GitHub Actions quality gates
+  test_properties.py          Hypothesis property-based foundation tests
+  test_properties_extended.py   additional Hypothesis helpers coverage
+  test_api_surface.py           import smoke tests for every submodule
+  ...                           (16 modules total; 160 tests; 99% coverage gate)
+requirements.txt                runtime dependencies
+requirements-dev.txt            dev/CI dependencies (includes requirements.txt)
+CHANGELOG.md                    release history
+LICENSE                         MIT
+Makefile                        local lint/typecheck/test targets
+.github/workflows/ci.yml        GitHub Actions quality gates
 ```
 
 The package has no network requirement. Tests prove that attacks land only on
