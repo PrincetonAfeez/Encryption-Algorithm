@@ -1,0 +1,5 @@
+# Runtime dependencies for FeltCrypto.
+# Install: pip install -r requirements.txt
+# Editable dev install (recommended): pip install -e ".[dev]"
+
+cryptography>=43
