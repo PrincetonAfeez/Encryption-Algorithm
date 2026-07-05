@@ -4,6 +4,23 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims to
 adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.4] - 2026-06-19
+
+### Added
+- Expanded test suite to **160** cases across **16** test modules, including API
+  surface smoke tests, Hypothesis property tests, and exhaustive weak-module
+  edge cases.
+- `requirements.txt` and `requirements-dev.txt` for runtime and CI/dev installs.
+- Coverage gate raised to **99%** (`--cov-fail-under=99` and
+  `[tool.coverage.report] fail_under`).
+
+### Changed
+- CI installs from `requirements-dev.txt`, enables pip caching, and uses workflow
+  concurrency.
+- README documents requirements-based install, test layout, and current quality
+  gates.
+- `.gitignore` explicitly excludes local academic scope planning documents.
+
 ## [0.1.3] - 2026-06-19
 
 ### Fixed
