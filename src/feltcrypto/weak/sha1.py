@@ -1,4 +1,4 @@
-"""Small educational SHA-1 with injectable state for length-extension study.
+"""Small educational SHA-1 with injectable state for length-extension study
 
 NOT CONSTANT-TIME. NOT AUDITED. NEVER USE FOR REAL PROTECTION.
 """
