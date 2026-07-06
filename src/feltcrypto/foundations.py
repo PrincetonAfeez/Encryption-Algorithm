@@ -1,4 +1,4 @@
-"""Byte, encoding, padding, chunking, and scoring foundations."""
+"""Byte, encoding, padding, chunking, and scoring foundations """
 
 from __future__ import annotations
 
