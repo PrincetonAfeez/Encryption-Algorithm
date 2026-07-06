@@ -1,3 +1,5 @@
+"""Tests for the registry and cli modules."""
+
 import json
 import subprocess
 import sys
@@ -13,6 +15,7 @@ from feltcrypto.registry import (
     SAFE_API_RESOLUTIONS,
     get_lesson,
     list_lessons,
+    run_all_lessons,
     run_lesson,
 )
 
@@ -20,6 +23,13 @@ from feltcrypto.registry import (
 @pytest.fixture(scope="module")
 def do_it_right_result() -> DemoResult:
     return run_lesson("do-it-right")
+
+
+def test_run_all_lessons_yields_every_registry_entry() -> None:
+    results = list(run_all_lessons())
+    assert len(results) == len(list_lessons())
+    lesson_ids = {lesson.lesson_id for lesson in list_lessons()}
+    assert {result.lesson_id for result in results} == lesson_ids
 
 
 def test_registry_metadata_for_every_lesson() -> None:
