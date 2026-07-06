@@ -1,4 +1,4 @@
-"""Clear exception types used at parsing and trust boundaries."""
+"""Clear exception types used at parsing and trust boundaries """
 
 
 class FeltCryptoError(Exception):
