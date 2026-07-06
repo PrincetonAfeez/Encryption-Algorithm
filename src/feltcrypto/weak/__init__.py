@@ -1,4 +1,4 @@
-"""INTENTIONALLY WEAK educational constructions.
+"""INTENTIONALLY WEAK educational constructions
 
 NOT SECURE. NEVER USE THESE MODULES FOR REAL PROTECTION.
 They exist only to attack bundled local fixtures.
