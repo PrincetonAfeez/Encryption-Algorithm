@@ -1,4 +1,4 @@
-"""Bundled, deterministic toy data. Attack demos never target external input."""
+"""Bundled, deterministic toy data. Attack demos never target external input """
 
 from __future__ import annotations
 
