@@ -1,4 +1,4 @@
-"""Typed lesson registry shared by the Python API and CLI."""
+"""Typed lesson registry shared by the Python API and CLI """
 
 from __future__ import annotations
 
