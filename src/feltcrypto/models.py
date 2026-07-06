@@ -1,4 +1,4 @@
-"""Shared typed models for lessons and their results."""
+"""Shared typed models for lessons and their results """
 
 from __future__ import annotations
 
