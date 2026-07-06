@@ -1,4 +1,4 @@
-"""Property-based hardening of the byte foundations.
+"""Property-based hardening of the byte foundations 
 
 The example-based tests check these invariants on a handful of hand-picked
 inputs; Hypothesis fuzzes them across many generated inputs so an edge case we
