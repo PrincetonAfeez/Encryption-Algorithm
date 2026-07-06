@@ -1,3 +1,5 @@
+"""Tests for the safe api module."""
+
 import base64
 import json
 
@@ -92,6 +94,19 @@ def test_decode_package_rejects_missing_fields_and_wrong_nonce_length() -> None:
     document["nonce"] = base64.b64encode(b"short").decode("ascii")
     with pytest.raises(ParseError, match="nonce"):
         decode_package(json.dumps(document))
+
+
+def test_decode_package_rejects_non_object_json() -> None:
+    with pytest.raises(ParseError, match="JSON object"):
+        decode_package("[]")
+
+
+def test_decrypt_rejects_invalid_nonce_length_before_authentication() -> None:
+    key = generate_key()
+    package = encrypt(key, b"secret bytes")
+    short_nonce = EncryptedPackage(b"short", package.ciphertext, package.associated_data)
+    with pytest.raises(AuthenticationError, match="invalid nonce"):
+        decrypt(key, short_nonce)
 
 
 def test_generate_key_uses_secure_policy(monkeypatch: pytest.MonkeyPatch) -> None:
