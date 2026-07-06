@@ -1,4 +1,4 @@
-"""Deliberately misused AES modes for local teaching fixtures.
+"""Deliberately misused AES modes for local teaching fixtures
 
 AES comes from ``cryptography``. The weaknesses here are in the surrounding
 construction. NOT SECURE. NEVER USE FOR REAL PROTECTION.
