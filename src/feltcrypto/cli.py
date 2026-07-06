@@ -1,4 +1,4 @@
-"""Command-line interface for local academic demos."""
+"""Command-line interface for local academic demos """
 
 from __future__ import annotations
 
