@@ -1,3 +1,5 @@
+"""Tests for the foundations module."""
+
 import pytest
 
 from feltcrypto.errors import PaddingError, ParseError
@@ -26,6 +28,7 @@ def test_encoding_round_trips_and_explicit_parsing() -> None:
     assert base64_decode(base64_encode(data)) == data
     assert parse_bytes("hello", "text") == b"hello"
     assert parse_bytes("6869", "hex") == b"hi"
+    assert parse_bytes(base64_encode(data), "base64") == data
 
 
 @pytest.mark.parametrize("value", ["not hex!", "0"])
@@ -87,3 +90,17 @@ def test_english_score_and_index_of_coincidence_edge_cases() -> None:
 def test_secure_bytes_rejects_non_positive_length() -> None:
     with pytest.raises(ValueError, match="positive"):
         secure_bytes(0)
+
+
+def test_fixed_xor_and_hamming_require_equal_lengths() -> None:
+    with pytest.raises(ValueError, match="equal-length"):
+        fixed_xor(b"abc", b"ab")
+    with pytest.raises(ValueError, match="equal-length"):
+        hamming_distance(b"abc", b"ab")
+
+
+def test_pkcs7_rejects_invalid_block_size() -> None:
+    with pytest.raises(ValueError, match="block size"):
+        pkcs7_pad(b"data", 0)
+    with pytest.raises(ValueError, match="block size"):
+        pkcs7_pad(b"data", 256)
