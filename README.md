@@ -82,12 +82,17 @@ it demonstrates the vetted API, not an attack.
 |---|---|
 | `0` | The command succeeded (`list`/`show`, or a lesson whose demo succeeded). |
 | `1` | A lesson ran but its demo did not succeed (`run` / `run-all`). |
-| `2` | Command-line usage error (invalid flags, missing arguments, unknown subcommand). |
-| `3` | Handled runtime or domain error (for example, an unknown lesson id). |
+| `2` | Argparse usage error (invalid flags, missing arguments, unknown subcommand). |
+| `3` | Handled runtime or domain error (for example, an unknown lesson id via `show` or `run`). |
 
 Usage errors are raised by `argparse` before any lesson runs. Runtime errors from
 the registry or lesson demos use exit code `3` so scripts can tell malformed
 invocations apart from valid commands that failed during execution.
+
+Only a **registered** lesson id may be used as a direct alias
+(`feltcrypto break-caesar` → `feltcrypto run break-caesar`). A mistyped
+subcommand such as `feltcrypto lst` is an unknown subcommand and exits with
+code `2`, not an unknown-lesson runtime error.
 
 ## Bytes first
 
@@ -151,7 +156,7 @@ python -m pip install -e ".[dev]"
 
 CI runs these gates on Python 3.11–3.13 via GitHub Actions (see
 [`.github/workflows/ci.yml`](.github/workflows/ci.yml)). The suite currently
-includes **160 tests** across **16 modules** with a **99%** line-coverage gate.
+includes **181 tests** across **17 modules** with a **99%** line-coverage gate.
 
 ### Test layout
 
@@ -419,7 +424,7 @@ tests/
   test_properties.py          Hypothesis property-based foundation tests
   test_properties_extended.py   additional Hypothesis helpers coverage
   test_api_surface.py           import smoke tests for every submodule
-  ...                           (16 modules total; 160 tests; 99% coverage gate)
+  ...                           (17 modules total; 181 tests; 99% coverage gate)
 requirements.in                 dependency constraints (runtime)
 requirements-dev.in             dependency constraints (dev/CI)
 requirements.txt                pinned runtime lockfile (pip-compile + hashes)

@@ -19,11 +19,14 @@
     },
     "nonce": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9+/]*={0,2}$",
-      "description": "Standard Base64 encoding of the 12-byte AES-GCM nonce."
+      "minLength": 16,
+      "maxLength": 16,
+      "pattern": "^[A-Za-z0-9+/]{16}$",
+      "description": "Standard Base64 encoding of exactly 12 nonce bytes."
     },
     "ciphertext": {
       "type": "string",
+      "minLength": 1,
       "pattern": "^[A-Za-z0-9+/]*={0,2}$",
       "description": "Standard Base64 encoding of ciphertext bytes including the GCM tag."
     },
@@ -32,5 +35,14 @@
       "pattern": "^[A-Za-z0-9+/]*={0,2}$",
       "description": "Standard Base64 encoding of associated authenticated data."
     }
-  }
+  },
+  "examples": [
+    {
+      "version": 1,
+      "algorithm": "AES-256-GCM",
+      "nonce": "AAAAAAAAAAAAAAAA",
+      "ciphertext": "AAAAAAAAAAAAAAAAAAAAAA==",
+      "associated_data": ""
+    }
+  ]
 }

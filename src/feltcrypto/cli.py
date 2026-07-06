@@ -69,8 +69,9 @@ def build_parser() -> argparse.ArgumentParser:
         prog="feltcrypto",
         description="Academic crypto failure demos against bundled local fixtures only.",
         epilog=(
-            "Any lesson id can be invoked directly, for example "
-            "'feltcrypto break-caesar' is the same as 'feltcrypto run break-caesar'."
+            "A registered lesson id can be invoked directly, for example "
+            "'feltcrypto break-caesar' is the same as 'feltcrypto run break-caesar'. "
+            "Unrecognized first tokens are usage errors, not lesson aliases."
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
@@ -93,16 +94,10 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-_SUBCOMMANDS = frozenset({"list", "show", "run", "run-all"})
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
-    if (
-        arguments
-        and not arguments[0].startswith("-")
-        and arguments[0] not in _SUBCOMMANDS
-    ):
+    lesson_ids = {lesson.lesson_id for lesson in list_lessons()}
+    if arguments and arguments[0] in lesson_ids:
         arguments.insert(0, "run")
 
     parser = build_parser()

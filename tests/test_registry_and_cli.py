@@ -115,9 +115,19 @@ def test_cli_and_registry_are_in_sync() -> None:
 
 
 def test_cli_unknown_lesson_returns_exit_code_three(capsys: pytest.CaptureFixture[str]) -> None:
-    for arguments in (["show", "not-a-lesson"], ["run", "not-a-lesson"], ["not-a-lesson"]):
+    for arguments in (["show", "not-a-lesson"], ["run", "not-a-lesson"]):
         assert main(arguments) == 3
         assert "error:" in capsys.readouterr().err
+
+
+def test_cli_direct_lesson_alias_runs_registered_lesson() -> None:
+    assert main(["break-caesar"]) == 0
+
+
+def test_cli_unknown_first_token_is_usage_error() -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        main(["not-a-command"])
+    assert excinfo.value.code == 2
 
 
 def test_cli_run_all_prints_summary(capsys: pytest.CaptureFixture[str]) -> None:

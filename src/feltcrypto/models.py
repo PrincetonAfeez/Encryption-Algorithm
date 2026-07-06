@@ -43,7 +43,9 @@ class DemoResult:
     not_for_real_use: bool = True
 
     def as_dict(self) -> dict[str, JSONValue]:
-        return cast(dict[str, JSONValue], asdict(self))
+        payload = cast(dict[str, JSONValue], asdict(self))
+        payload["concepts"] = list(self.concepts)
+        return payload
 
 
 DemoRunner: TypeAlias = Callable[[], DemoResult]

@@ -9,6 +9,8 @@ adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 - CLI runtime/domain errors now exit with code **3**; code **2** is reserved for
   `argparse` usage errors (CLI3).
+- Direct lesson aliases rewrite to `run` only for registered lesson ids; mistyped
+  subcommands remain usage errors (CLI2).
 
 ### Added
 - README **Encrypted package format** section and JSON Schemas under `Schema/`.
@@ -16,6 +18,12 @@ adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   large-input round-trip tests (PAR3).
 - CLI exit-code tests for usage (`2`), runtime errors (`3`), and failed lessons
   (`1`).
+- JSON Schema validation tests with `jsonschema`; encrypted-package nonce rule
+  matches the 12-byte decode requirement (PAR4).
+
+### Changed
+- README and CI no longer embed a stale test count in the CI step name; suite
+  documented as **181 tests** across **17 modules** (U7).
 
 ## [0.1.5] - 2026-07-06
 
