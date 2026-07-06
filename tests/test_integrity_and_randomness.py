@@ -1,3 +1,5 @@
+"""Tests for the integrity and randomness modules."""
+
 import hashlib
 import random
 
@@ -44,6 +46,29 @@ def test_time_seed_is_recovered_inside_small_window() -> None:
     seed = 1_700_000_123
     token = randomness_failures.generate_time_seeded_token(seed)
     assert randomness_failures.recover_time_seed(token, seed + 5, 10) == seed
+    assert randomness_failures.recover_time_seed(token, seed + 500, 1) is None
+
+
+def test_clone_mt19937_requires_exactly_624_outputs() -> None:
+    with pytest.raises(ValueError, match="624"):
+        randomness_failures.clone_mt19937([0] * 623)
+
+
+def test_insecure_compare_length_mismatch() -> None:
+    assert not integrity.insecure_compare(b"abc", b"ab")
+
+
+def test_forge_prefix_mac_rejects_non_positive_key_length() -> None:
+    with pytest.raises(ValueError, match="positive"):
+        integrity.forge_prefix_mac(b"m", b"t", b"s", 0)
+
+
+def test_naive_prefix_mac_verify_round_trip() -> None:
+    key = b"demo-key"
+    message = b"local message"
+    tag = integrity.naive_prefix_mac(key, message)
+    assert integrity.verify_naive_prefix_mac(key, message, tag)
+    assert not integrity.verify_naive_prefix_mac(key, message + b"tamper", tag)
 
 
 def test_mt19937_clone_predicts_future_outputs() -> None:
