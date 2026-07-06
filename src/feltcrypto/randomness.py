@@ -1,4 +1,4 @@
-"""Randomness policy: secure defaults and explicitly named insecure demos."""
+"""Randomness policy: secure defaults and explicitly named insecure demos """
 
 from __future__ import annotations
 
