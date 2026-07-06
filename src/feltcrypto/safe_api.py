@@ -1,4 +1,4 @@
-"""Small, boring authenticated-encryption API backed by ``cryptography``."""
+"""Small, boring authenticated-encryption API backed by ``cryptography``"""
 
 from __future__ import annotations
 
