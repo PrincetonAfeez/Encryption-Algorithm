@@ -1,4 +1,4 @@
-"""Command-line interface for local academic demos """
+"""Command-line interface for local academic demos."""
  
 from __future__ import annotations
 
@@ -93,10 +93,16 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+_SUBCOMMANDS = frozenset({"list", "show", "run", "run-all"})
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     arguments = list(sys.argv[1:] if argv is None else argv)
-    lesson_ids = {lesson.lesson_id for lesson in list_lessons()}
-    if arguments and arguments[0] in lesson_ids:
+    if (
+        arguments
+        and not arguments[0].startswith("-")
+        and arguments[0] not in _SUBCOMMANDS
+    ):
         arguments.insert(0, "run")
 
     parser = build_parser()
@@ -147,7 +153,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"SUMMARY: {succeeded}/{len(results)} lessons succeeded")
         return 0 if all(result.success for result in results) else 1
     except (FeltCryptoError, ValueError) as exc:
-        parser.exit(2, f"error: {exc}\n")
+        print(f"error: {exc}", file=sys.stderr)
+        return 3
 
 
 if __name__ == "__main__":

@@ -1,0 +1,4 @@
+# Runtime dependency constraints for pip-compile.
+# Regenerate: pip-compile --generate-hashes requirements.in
+
+cryptography>=43

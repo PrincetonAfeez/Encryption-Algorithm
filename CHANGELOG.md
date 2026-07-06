@@ -4,6 +4,36 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project aims to
 adhere to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.6] - 2026-07-06
+
+### Fixed
+- CLI runtime/domain errors now exit with code **3**; code **2** is reserved for
+  `argparse` usage errors (CLI3).
+
+### Added
+- README **Encrypted package format** section and JSON Schemas under `Schema/`.
+- Parser input-size policy (Option A: in-memory, no application-level cap) with
+  large-input round-trip tests (PAR3).
+- CLI exit-code tests for usage (`2`), runtime errors (`3`), and failed lessons
+  (`1`).
+
+## [0.1.5] - 2026-07-06
+
+### Fixed
+- Repository metadata in `pyproject.toml` now points to
+  [PrincetonAfeez/Encryption-Algorithm](https://github.com/PrincetonAfeez/Encryption-Algorithm)
+  on the `main` branch.
+
+### Added
+- Architecture Decision Record:
+  [docs/adr/0001-local-fixtures-and-narrow-safe-api.md](docs/adr/0001-local-fixtures-and-narrow-safe-api.md).
+- `requirements.in` / `requirements-dev.in` constraint files and pip-compile
+  lockfiles with hashes in `requirements.txt` / `requirements-dev.txt`.
+
+### Changed
+- README uses the live GitHub Actions badge and removes placeholder URL warnings.
+- CI installs pinned dependencies with `--require-hashes`.
+
 ## [0.1.4] - 2026-06-19
 
 ### Added

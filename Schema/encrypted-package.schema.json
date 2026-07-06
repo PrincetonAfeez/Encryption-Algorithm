@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/PrincetonAfeez/Encryption-Algorithm/Schema/encrypted-package.schema.json",
+  "title": "FeltCrypto Encrypted Package",
+  "description": "JSON document produced by feltcrypto.safe_api.encode_package().",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "algorithm", "nonce", "ciphertext", "associated_data"],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "const": 1,
+      "description": "Package format version. Only version 1 is supported."
+    },
+    "algorithm": {
+      "type": "string",
+      "const": "AES-256-GCM",
+      "description": "Authenticated encryption algorithm identifier."
+    },
+    "nonce": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+      "description": "Standard Base64 encoding of the 12-byte AES-GCM nonce."
+    },
+    "ciphertext": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+      "description": "Standard Base64 encoding of ciphertext bytes including the GCM tag."
+    },
+    "associated_data": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9+/]*={0,2}$",
+      "description": "Standard Base64 encoding of associated authenticated data."
+    }
+  }
+}

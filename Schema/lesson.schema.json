@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/PrincetonAfeez/Encryption-Algorithm/Schema/lesson.schema.json",
+  "title": "FeltCrypto Lesson Metadata",
+  "description": "JSON object returned by feltcrypto show LESSON_ID --json and Lesson.metadata().",
+  "type": "object",
+  "required": [
+    "lesson_id",
+    "title",
+    "concepts",
+    "fixture_name",
+    "weak_assumption",
+    "educational_only",
+    "local_fixture",
+    "not_for_real_use",
+    "safety_notice",
+    "summary"
+  ],
+  "properties": {
+    "lesson_id": { "type": "string" },
+    "title": { "type": "string" },
+    "concepts": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fixture_name": { "type": "string" },
+    "weak_assumption": { "type": "string" },
+    "educational_only": { "type": "boolean", "const": true },
+    "local_fixture": { "type": "boolean", "const": true },
+    "not_for_real_use": { "type": "boolean" },
+    "safety_notice": { "type": "string" },
+    "summary": {
+      "type": "object",
+      "required": ["failure", "cause", "correct_construction", "safe_api_link"],
+      "properties": {
+        "failure": { "type": "string" },
+        "cause": { "type": "string" },
+        "correct_construction": { "type": "string" },
+        "safe_api_link": { "type": "string" }
+      },
+      "additionalProperties": false
+    },
+    "explanation": {
+      "type": "string",
+      "description": "Present when feltcrypto show --json includes the lesson narrative."
+    }
+  },
+  "additionalProperties": false
+}

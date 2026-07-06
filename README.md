@@ -1,13 +1,6 @@
 # FeltCrypto
 
-[![CI](https://img.shields.io/badge/CI-GitHub%20Actions-blue)](.github/workflows/ci.yml)
-
-> After publishing to GitHub, replace the static CI badge with your live Actions badge:
-> `https://github.com/PrincetonAfeez/feltcrypto/actions/workflows/ci.yml/badge.svg`
-
-> **Repository URLs:** `pyproject.toml` lists placeholder GitHub links
-> (`PrincetonAfeez/feltcrypto`) for portfolio metadata. Update them after you
-> create and push the remote, or reviewers may hit a 404.
+[![CI](https://github.com/PrincetonAfeez/Encryption-Algorithm/actions/workflows/ci.yml/badge.svg)](https://github.com/PrincetonAfeez/Encryption-Algorithm/actions/workflows/ci.yml)
 
 **Author:** Princeton Afeez · **Capstone:** Systems Programming in Python
 
@@ -20,7 +13,9 @@ invariant, and ends with a small AES-GCM API backed by `cryptography`.
 > ciphers and demonstrates classic crypto pitfalls — to internalize why we use
 > audited libraries.
 
-See [CHANGELOG.md](CHANGELOG.md) for release history.
+See [CHANGELOG.md](CHANGELOG.md) for release history and
+[docs/adr/0001-local-fixtures-and-narrow-safe-api.md](docs/adr/0001-local-fixtures-and-narrow-safe-api.md)
+for the academic safety boundary and narrow safe API design.
 
 > **Educational use only.** Weak modules are under `feltcrypto.weak`, are
 > explicitly not secure, and operate only on bundled or locally generated
@@ -37,12 +32,20 @@ Python 3.11 or newer is required.
 python -m pip install -e ".[dev]"
 ```
 
-**Requirements files** (runtime or CI-style install):
+**Requirements files** (pinned lockfiles generated with `pip-compile`):
 
 ```console
-python -m pip install -r requirements.txt          # runtime only
-python -m pip install -r requirements-dev.txt      # dev/CI tools
-python -m pip install -e .                         # add after requirements-dev.txt
+python -m pip install --require-hashes -r requirements.txt       # runtime only
+python -m pip install --require-hashes -r requirements-dev.txt   # dev/CI tools
+python -m pip install -e . --no-deps                             # local package
+```
+
+To regenerate lockfiles after changing `requirements.in` or `requirements-dev.in`:
+
+```console
+python -m pip install pip-tools
+pip-compile --generate-hashes --output-file=requirements.txt requirements.in
+pip-compile --generate-hashes --output-file=requirements-dev.txt requirements-dev.in
 ```
 
 ```console
@@ -79,7 +82,12 @@ it demonstrates the vetted API, not an attack.
 |---|---|
 | `0` | The command succeeded (`list`/`show`, or a lesson whose demo succeeded). |
 | `1` | A lesson ran but its demo did not succeed (`run` / `run-all`). |
-| `2` | A usage error or a handled runtime error (for example, an unknown lesson id). |
+| `2` | Command-line usage error (invalid flags, missing arguments, unknown subcommand). |
+| `3` | Handled runtime or domain error (for example, an unknown lesson id). |
+
+Usage errors are raised by `argparse` before any lesson runs. Runtime errors from
+the registry or lesson demos use exit code `3` so scripts can tell malformed
+invocations apart from valid commands that failed during execution.
 
 ## Bytes first
 
@@ -90,6 +98,12 @@ English scoring, and strictly validated PKCS#7 padding.
 
 Malformed encodings and padding raise clear exceptions. Nothing silently
 coerces invalid data.
+
+**Input size:** parser helpers operate on in-memory strings and bytes. FeltCrypto
+does not enforce an application-level size limit because the library only accepts
+local educational inputs (bundled fixtures and small API examples). Very large
+inputs are bounded only by available memory; tests verify that reasonably large
+hex and Base64 values still parse correctly.
 
 These parsers (`parse_bytes` for text, hex, and Base64) are part of the top-level
 `feltcrypto` API, alongside `feltcrypto.safe_api` helpers such as `generate_key`,
@@ -119,8 +133,8 @@ command that breaks user-supplied ciphertext.
 
 ## Development and quality gates
 
-Install dev dependencies (`pip install -e ".[dev]"` or `requirements-dev.txt`
-plus `pip install -e .`), then run the same checks as CI:
+Install dev dependencies (`pip install -e ".[dev]"` or the pinned
+`requirements-dev.txt` workflow above), then run the same checks as CI:
 
 ```console
 python -m pip install -e ".[dev]"
@@ -159,6 +173,7 @@ includes **160 tests** across **16 modules** with a **99%** line-coverage gate.
 | `test_api_surface.py` | Import smoke tests for every submodule |
 | `test_properties.py` | Hypothesis round-trip invariants |
 | `test_properties_extended.py` | Hypothesis coverage for foundations helpers |
+| `test_schema_documents.py` | JSON Schema files and documented output shapes |
 
 On Windows without Make, invoke the commands in the table directly in PowerShell
 or your terminal.
@@ -304,6 +319,49 @@ from feltcrypto.safe_api import decode_package, decrypt, encode_package, encrypt
 Production applications still need a real key-management design. This capstone
 does not turn its teaching code into production cryptography.
 
+### Encrypted package format
+
+`encode_package()` emits a compact JSON object. `decode_package()` validates the
+document before returning an `EncryptedPackage`. Unknown JSON fields are ignored
+during decode; authentication is verified only when `decrypt()` runs.
+
+Example:
+
+```json
+{
+  "algorithm": "AES-256-GCM",
+  "associated_data": "",
+  "ciphertext": "...",
+  "nonce": "...",
+  "version": 1
+}
+```
+
+| Field | Type | Rules |
+|---|---|---|
+| `version` | integer | Must be `1`. Other values raise `ParseError`. |
+| `algorithm` | string | Must be exactly `AES-256-GCM`. |
+| `nonce` | string | Valid standard Base64; must decode to **12 bytes**. |
+| `ciphertext` | string | Valid standard Base64; holds ciphertext **and** GCM tag. |
+| `associated_data` | string | Valid standard Base64; may encode an empty byte string. |
+
+Additional rules:
+
+- The document must be a JSON object. Arrays and scalars are rejected.
+- Malformed JSON or invalid Base64 raises `ParseError`.
+- Missing required fields raise `ParseError`.
+- After decoding, `decrypt()` verifies the AEAD tag. Any tampering, wrong key,
+  or wrong associated data raises `AuthenticationError` and returns **no**
+  plaintext.
+- Future package formats must bump `version`; consumers should reject unknown
+  versions rather than guessing compatibility.
+
+Formal JSON Schemas:
+
+- [Schema/encrypted-package.schema.json](Schema/encrypted-package.schema.json)
+- [Schema/demo-result.schema.json](Schema/demo-result.schema.json)
+- [Schema/lesson.schema.json](Schema/lesson.schema.json)
+
 ## Lesson contract
 
 Every registry entry supplies:
@@ -362,8 +420,12 @@ tests/
   test_properties_extended.py   additional Hypothesis helpers coverage
   test_api_surface.py           import smoke tests for every submodule
   ...                           (16 modules total; 160 tests; 99% coverage gate)
-requirements.txt                runtime dependencies
-requirements-dev.txt            dev/CI dependencies (includes requirements.txt)
+requirements.in                 dependency constraints (runtime)
+requirements-dev.in             dependency constraints (dev/CI)
+requirements.txt                pinned runtime lockfile (pip-compile + hashes)
+requirements-dev.txt            pinned dev/CI lockfile (pip-compile + hashes)
+docs/adr/                       architecture decision records
+Schema/                         JSON Schemas for CLI/API documents
 CHANGELOG.md                    release history
 LICENSE                         MIT
 Makefile                        local lint/typecheck/test targets

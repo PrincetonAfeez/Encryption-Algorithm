@@ -18,7 +18,7 @@ def test_version_fallback_when_metadata_missing(monkeypatch: pytest.MonkeyPatch)
 
     monkeypatch.setattr("importlib.metadata.version", missing)
     reloaded = importlib.reload(feltcrypto)
-    assert reloaded.__version__ == "0.1.4"
+    assert reloaded.__version__ == "0.1.6"
     importlib.reload(feltcrypto)
 
 

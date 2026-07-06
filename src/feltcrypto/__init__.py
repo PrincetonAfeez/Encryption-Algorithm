@@ -23,7 +23,7 @@ from feltcrypto.safe_api import (
 try:
     __version__ = version("feltcrypto")
 except PackageNotFoundError:
-    __version__ = "0.1.4"
+    __version__ = "0.1.6"
 
 __all__ = [
     "AuthenticationError",

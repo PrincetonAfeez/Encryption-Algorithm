@@ -114,11 +114,10 @@ def test_cli_and_registry_are_in_sync() -> None:
         assert get_lesson(lesson.lesson_id).lesson_id == lesson.lesson_id
 
 
-def test_cli_unknown_lesson_exits_with_code_two() -> None:
+def test_cli_unknown_lesson_returns_exit_code_three(capsys: pytest.CaptureFixture[str]) -> None:
     for arguments in (["show", "not-a-lesson"], ["run", "not-a-lesson"], ["not-a-lesson"]):
-        with pytest.raises(SystemExit) as excinfo:
-            main(arguments)
-        assert excinfo.value.code == 2
+        assert main(arguments) == 3
+        assert "error:" in capsys.readouterr().err
 
 
 def test_cli_run_all_prints_summary(capsys: pytest.CaptureFixture[str]) -> None:

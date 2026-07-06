@@ -104,3 +104,12 @@ def test_pkcs7_rejects_invalid_block_size() -> None:
         pkcs7_pad(b"data", 0)
     with pytest.raises(ValueError, match="block size"):
         pkcs7_pad(b"data", 256)
+
+
+def test_large_hex_base64_and_text_inputs_round_trip() -> None:
+    data = b"local-educational-input" * 5000
+    assert hex_decode(hex_encode(data)) == data
+    assert base64_decode(base64_encode(data)) == data
+    assert parse_bytes(base64_encode(data), "base64") == data
+    text = "fixture text " * 5000
+    assert parse_bytes(text, "text") == text.encode("utf-8")

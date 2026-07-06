@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/PrincetonAfeez/Encryption-Algorithm/Schema/demo-result.schema.json",
+  "title": "FeltCrypto Demo Result",
+  "description": "JSON object returned by feltcrypto run LESSON_ID --json and DemoResult.as_dict().",
+  "type": "object",
+  "required": [
+    "lesson_id",
+    "concepts",
+    "fixture_name",
+    "success",
+    "observation",
+    "takeaway",
+    "safe_api_reference",
+    "educational_only",
+    "local_fixture",
+    "not_for_real_use"
+  ],
+  "properties": {
+    "lesson_id": { "type": "string" },
+    "concepts": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "fixture_name": { "type": "string" },
+    "success": { "type": "boolean" },
+    "observation": { "type": "string" },
+    "takeaway": { "type": "string" },
+    "safe_api_reference": { "type": "string" },
+    "recovered_key": { "type": ["string", "null"] },
+    "recovered_plaintext": { "type": ["string", "null"] },
+    "measurements": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "diagnostics": {
+      "type": "object",
+      "additionalProperties": true
+    },
+    "educational_only": { "type": "boolean", "const": true },
+    "local_fixture": { "type": "boolean", "const": true },
+    "not_for_real_use": { "type": "boolean" }
+  },
+  "additionalProperties": false
+}

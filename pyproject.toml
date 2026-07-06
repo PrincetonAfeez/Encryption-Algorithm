@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "feltcrypto"
-version = "0.1.4"
+version = "0.1.6"
 description = "A local, academic cryptography failure-mode teaching library"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -25,9 +25,9 @@ classifiers = [
 dependencies = ["cryptography>=43"]
 
 [project.urls]
-Homepage = "https://github.com/PrincetonAfeez/feltcrypto"
-Repository = "https://github.com/PrincetonAfeez/feltcrypto"
-Changelog = "https://github.com/PrincetonAfeez/feltcrypto/blob/master/CHANGELOG.md"
+Homepage = "https://github.com/PrincetonAfeez/Encryption-Algorithm"
+Repository = "https://github.com/PrincetonAfeez/Encryption-Algorithm"
+Changelog = "https://github.com/PrincetonAfeez/Encryption-Algorithm/blob/main/CHANGELOG.md"
 
 [project.optional-dependencies]
 dev = [
@@ -38,8 +38,9 @@ dev = [
     "ruff>=0.8",
 ]
 
-# Lockfiles for non-editable installs live in requirements.txt and
-# requirements-dev.txt at the repository root (kept in sync with the extras above).
+# Version ranges above define package compatibility. Reproducible installs use
+# pip-compile lockfiles: requirements.in → requirements.txt and
+# requirements-dev.in → requirements-dev.txt (pinned with hashes).
 
 [project.scripts]
 feltcrypto = "feltcrypto.cli:main"

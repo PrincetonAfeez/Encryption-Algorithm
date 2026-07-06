@@ -2,10 +2,15 @@
 #   pip install -e ".[dev]"
 # On Windows, run these through Git Bash or invoke the commands directly.
 
-.PHONY: install test lint format typecheck check
+.PHONY: install test lint format typecheck check lock
 
 install:
-	pip install -e ".[dev]"
+	pip install --require-hashes -r requirements-dev.txt
+	pip install -e . --no-deps
+
+lock:
+	pip-compile --generate-hashes --output-file=requirements.txt requirements.in
+	pip-compile --generate-hashes --output-file=requirements-dev.txt requirements-dev.in
 
 test:
 	pytest

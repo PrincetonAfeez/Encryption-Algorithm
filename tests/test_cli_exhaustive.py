@@ -63,13 +63,26 @@ def test_cli_run_all_failure_summary(
     assert "SUMMARY: 1/2 lessons succeeded" in capsys.readouterr().out
 
 
-def test_cli_value_error_exits_with_code_two(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_cli_value_error_returns_exit_code_three(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
     def boom(_lesson_id: str) -> DemoResult:
         raise ValueError("simulated lesson failure")
 
     monkeypatch.setattr("feltcrypto.cli.run_lesson", boom)
+    assert main(["run", "break-caesar"]) == 3
+    assert "error: simulated lesson failure" in capsys.readouterr().err
+
+
+def test_cli_usage_error_exits_with_code_two() -> None:
     with pytest.raises(SystemExit) as excinfo:
-        main(["run", "break-caesar"])
+        main(["run"])
+    assert excinfo.value.code == 2
+
+
+def test_cli_unknown_option_exits_with_code_two() -> None:
+    with pytest.raises(SystemExit) as excinfo:
+        main(["list", "--not-an-option"])
     assert excinfo.value.code == 2
 
 

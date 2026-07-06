@@ -109,6 +109,14 @@ def test_decrypt_rejects_invalid_nonce_length_before_authentication() -> None:
         decrypt(key, short_nonce)
 
 
+def test_decode_package_ignores_unknown_json_fields() -> None:
+    key = generate_key()
+    document = json.loads(encode_package(encrypt(key, b"x")))
+    document["extra"] = "ignored"
+    package = decode_package(json.dumps(document))
+    assert decrypt(key, package) == b"x"
+
+
 def test_generate_key_uses_secure_policy(monkeypatch: pytest.MonkeyPatch) -> None:
     calls: list[int] = []
 
