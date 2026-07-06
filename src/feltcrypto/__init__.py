@@ -1,4 +1,4 @@
-"""Academic cryptography failure-mode lessons.
+"""Academic cryptography failure-mode lessons
 
 The ``feltcrypto.weak`` namespace is intentionally insecure and exists only
 for bundled, local demonstrations. Real applications should use
@@ -23,7 +23,7 @@ from feltcrypto.safe_api import (
 try:
     __version__ = version("feltcrypto")
 except PackageNotFoundError:
-    __version__ = "0.1.3"
+    __version__ = "0.1.4"
 
 __all__ = [
     "AuthenticationError",
