@@ -1,4 +1,4 @@
-"""Integrity construction and timing failures against local toy targets.
+"""Integrity construction and timing failures against local toy targets
 
 NOT SECURE. NEVER USE FOR REAL PROTECTION.
 """
