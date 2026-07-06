@@ -1,3 +1,5 @@
+"""Tests for the block modes module."""
+
 import pytest
 
 from feltcrypto import fixtures
@@ -127,3 +129,40 @@ def test_cbc_bit_flip_rejects_mismatched_fragments_and_negative_offset() -> None
 def test_padding_oracle_attack_rejects_bad_fixture() -> None:
     with pytest.raises(ValueError, match="oracle attack fixture"):
         block_modes.padding_oracle_attack(b"short", b"data", lambda _iv, _ct: False)
+
+
+def test_cbc_bit_flip_first_block_modifies_iv() -> None:
+    key = b"C" * 16
+    iv = b"V" * 16
+    plaintext = b"admin=0;comment=toy-demo"
+    ciphertext = block_modes.aes_cbc_encrypt(plaintext, key, iv)
+    modified, modified_iv = block_modes.cbc_bit_flip(
+        ciphertext,
+        iv,
+        0,
+        b"admin=0",
+        b"admin=1",
+    )
+    assert modified_iv != iv
+    assert b"admin=1" in block_modes.aes_cbc_decrypt(modified, key, modified_iv)
+
+
+def test_local_padding_oracle_rejects_invalid_key() -> None:
+    with pytest.raises(ValueError, match="AES key"):
+        block_modes.LocalPaddingOracle(b"bad")
+
+
+def test_local_padding_oracle_reports_invalid_padding() -> None:
+    oracle = block_modes.LocalPaddingOracle(b"P" * 16)
+    assert not oracle.valid_padding(b"O" * 16, b"not-aligned")
+
+
+def test_padding_oracle_recovers_two_block_plaintext() -> None:
+    key = b"P" * 16
+    iv = b"O" * 16
+    plaintext = b"YELLOW SUBMARINE"
+    ciphertext = block_modes.aes_cbc_encrypt(plaintext, key, iv)
+    oracle = block_modes.LocalPaddingOracle(key)
+    recovered, queries = block_modes.padding_oracle_attack(iv, ciphertext, oracle.valid_padding)
+    assert recovered == plaintext
+    assert queries > len(plaintext)
