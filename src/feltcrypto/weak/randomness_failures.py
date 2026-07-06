@@ -1,4 +1,4 @@
-"""Predictable RNG demonstrations against locally generated values.
+"""Predictable RNG demonstrations against locally generated values
 
 NOT SECURE. NEVER USE FOR REAL KEY GENERATION.
 """
