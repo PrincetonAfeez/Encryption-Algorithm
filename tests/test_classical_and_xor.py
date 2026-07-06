@@ -1,3 +1,5 @@
+"""Tests for the classical and xor modules."""
+
 from feltcrypto import fixtures
 from feltcrypto.weak import classical, xor
 
