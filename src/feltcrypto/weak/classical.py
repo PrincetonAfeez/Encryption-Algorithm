@@ -1,4 +1,4 @@
-"""Classical ciphers and local attacks.
+"""Classical ciphers and local attacks
 
 NOT SECURE. NEVER USE FOR REAL PROTECTION.
 """
