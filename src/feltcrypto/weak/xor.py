@@ -1,4 +1,4 @@
-"""XOR ciphers, key-reuse failures, and attacks on local fixtures.
+"""XOR ciphers, key-reuse failures, and attacks on local fixtures
 
 NOT SECURE. NEVER USE FOR REAL PROTECTION.
 """
